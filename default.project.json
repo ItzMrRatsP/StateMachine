@@ -1,0 +1,9 @@
+{
+    "name": "StateMachine",
+    "tree": {
+        "$className": "DataModel",
+        "StateMachine": {
+            "$path": "init.lua"
+        }
+    }
+}

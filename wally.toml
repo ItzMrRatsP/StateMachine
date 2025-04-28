@@ -1,0 +1,9 @@
+[package]
+name = "itzmrratsp/statemachine"
+version = "0.1.0"
+registry = "https://github.com/UpliftGames/wally-index"
+realm = "shared"
+exclude = [".toml", ".gitignore", ".md", ".json"]
+
+[dependencies]
+#empty dependencies
