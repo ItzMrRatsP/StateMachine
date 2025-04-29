@@ -88,7 +88,7 @@ function stateMachine:switch(initialStateId, ...)
 
 	-- Enter to the current state
 	self._currentState = self._states[initialStateId] :: State<...any>
-	if not self._currentState then
+	if not self._currentState or not self._currentState.enter then
 		return
 	end
 
