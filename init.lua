@@ -88,12 +88,14 @@ function stateMachine:switch(initialStateId, ...)
 
 	-- Enter to the current state
 	self._currentState = self._states[initialStateId] :: State<...any>
-	if not self._currentState or not self._currentState.enter then
+	if not self._currentState then
 		return
 	end
 
 	-- Enter the state
-	self._currentState.enter(...)
+	if self._currentState.enter then
+		self._currentState.enter(...)
+	end
 
 	-- Start the update after state is entered
 	self:_bindUpdate()
@@ -112,7 +114,10 @@ function stateMachine:exit(...)
 	self._disconnectConnection()
 
 	-- Leave the state
-	self._currentState.exit(...)
+	if self._currentState.exit then
+		self._currentState.exit(...)
+	end
+
 	self._currentState = nil
 end
 
