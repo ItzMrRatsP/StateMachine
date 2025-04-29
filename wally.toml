@@ -1,9 +1,17 @@
 [package]
 name = "itzmrratsp/statemachine"
-version = "0.1.0"
+version = "0.2.0"
 registry = "https://github.com/UpliftGames/wally-index"
 realm = "shared"
-exclude = [".toml", ".gitignore", ".md", ".json"]
+exclude = [
+    "selene.toml",
+    ".gitignore",
+    "README.md",
+    "sourcemap.json",
+    "roblox.yml",
+    "rokit.toml",
+    # "wally.toml",
+]
 
 [dependencies]
 #empty dependencies
