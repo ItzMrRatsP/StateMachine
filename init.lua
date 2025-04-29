@@ -11,14 +11,12 @@ export type StateManager = {
 	_currentConnection: RBXScriptConnection?,
 	_states: { State<...any>? },
 	_disconnectConnection: () -> (),
-	_bindUpdate: (StateManager, event: RunServiceEvents) -> (),
+	_bindUpdate: (StateManager) -> (),
 
 	add: (StateManager, initialStateId: string, initalState: State<...any>) -> (),
 	exit: (StateManager, ...any) -> (),
 	switch: (StateManager, ...any) -> (),
 }
-
-type RunServiceEvents = "Heartbeat" | "PreRender" | "PreSimulation" | "PreAnimation"
 
 local stateMachine = {}
 
@@ -69,7 +67,7 @@ function stateMachine:bindUpdate()
 end
 
 --[[
-Switch to the desired state, But the state must be added using .new() method
+Switch to the desired state, But the state must be added using :add() method
 state: The state id we're trying to switch to
 ]]
 function stateMachine:switch(initialStateId, ...)
