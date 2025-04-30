@@ -11,7 +11,7 @@ export type StateManager = {
 	_currentConnection: RBXScriptConnection?,
 	_states: { State<...any>? },
 	_disconnectConnection: () -> (),
-	_bindUpdate: (StateManager) -> (),
+	_update: (StateManager) -> (),
 
 	add: (StateManager, initialStateId: string, initalState: State<...any>) -> (),
 	exit: (StateManager, ...any) -> (),
@@ -31,11 +31,14 @@ function stateMachine.new(): StateManager
 		end
 	end
 
-	self._bindUpdate = stateMachine.bindUpdate
-
 	self.add = stateMachine.add
 	self.exit = stateMachine.exit
 	self.switch = stateMachine.switch
+	self._update = stateMachine.update
+
+	RunService.Heartbeat:Connect(function(dt)
+		self:_update(dt)
+	end)
 
 	return self :: StateManager
 end
@@ -54,16 +57,18 @@ end
     Update functions will connect one of the runservice signals to the current running state update function.
     If the state doesn't have update function then it won't work.
 ]]
-function stateMachine:bindUpdate()
-	-- Disconnect the current running loop
-	self._disconnectConnection()
-
-	-- First check if state is there, Second check if state have .update function
-	if not self._currentState or not self._currentState.update then
+function stateMachine:update(dt)
+	-- Fatal: First check if state is there, Second check if state have .update function
+	if not self._currentState then
 		return
 	end
 
-	self._currentConnection = RunService.Heartbeat:Connect(self._currentState.update)
+	-- No update function
+	if not self._currentState.update then
+		return
+	end
+
+	self._currentState.update(dt)
 end
 
 --[[
@@ -98,7 +103,6 @@ function stateMachine:switch(initialStateId, ...)
 	end
 
 	-- Start the update after state is entered
-	self:_bindUpdate()
 end
 
 --[[
@@ -109,9 +113,6 @@ function stateMachine:exit(...)
 	if not self._currentState then
 		return
 	end
-
-	-- Disconnect the update loop
-	self._disconnectConnection()
 
 	-- Leave the state
 	if self._currentState.exit then
