@@ -6,11 +6,10 @@ type State<T...> = {
 
 export type StateManager = {
 	_currentState: State<...any>?,
-	_currentConnection: RBXScriptConnection?,
 	_states: { State<...any>? },
-	_disconnectConnection: () -> (),
-	update: (StateManager) -> (),
+	_previousState: State<...any>?,
 
+	update: (StateManager) -> (),
 	add: (StateManager, initialStateId: string, initalState: State<...any>) -> (),
 	exit: (StateManager, ...any) -> (),
 	switch: (StateManager, ...any) -> (),
@@ -23,6 +22,7 @@ function stateMachine.new(): StateManager
 	local self = {}
 	self._currentState = nil
 	self._states = {}
+	self._previousState = {}
 
 	self.add = stateMachine.add
 	self.exit = stateMachine.exit
@@ -55,7 +55,7 @@ end
 ]]
 function stateMachine:update(dt: number)
 	-- Check: Check if update function is a thing, If it doesn't exist there is no point in calling.
-	if not self._currentState.update then
+	if not self._currentState or not self._currentState.update then
 		return
 	end
 
@@ -68,14 +68,15 @@ Switch to the desired state, But the state must be added using :add() method
 state: The state id we're trying to switch to
 ]]
 function stateMachine:switch(StateId, ...)
+	-- Leave previous state if it exist
+	if self._currentState then
+		self:exit()
+	end
+
 	-- The state doesn't even exist, how do you expect it to work.
 	if self._currentState == StateId then
 		return
 	end
-
-	-- Exit the previous state, So we can move on the new state
-	self:exit()
-
 	-- Enter to the current state
 	self._currentState = self._states[StateId] :: State<...any>
 	if not self._currentState then
@@ -122,5 +123,9 @@ function stateMachine:remove(stateId: string, ...)
 	self._state[stateId] = nil
 end
 
--- Remove states?
 return stateMachine
+
+--[[
+Author: @ItzMrRatsP
+Publish Date: 4/30/2025
+]]
