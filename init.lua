@@ -7,7 +7,6 @@ type State<T...> = {
 export type StateManager = {
 	_currentState: State<...any>?,
 	_states: { State<...any>? },
-	_previousState: State<...any>?,
 
 	update: (StateManager) -> (),
 	add: (StateManager, initialStateId: string, initalState: State<...any>) -> (),
@@ -22,7 +21,6 @@ function stateMachine.new(): StateManager
 	local self = {}
 	self._currentState = nil
 	self._states = {}
-	self._previousState = {}
 
 	self.add = stateMachine.add
 	self.exit = stateMachine.exit
