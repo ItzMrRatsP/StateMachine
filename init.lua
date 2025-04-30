@@ -1,5 +1,3 @@
-local RunService = game:GetService("RunService")
-
 type State<T...> = {
 	update: (dt: number) -> ()?,
 	enter: (T...) -> ()?,
@@ -11,11 +9,12 @@ export type StateManager = {
 	_currentConnection: RBXScriptConnection?,
 	_states: { State<...any>? },
 	_disconnectConnection: () -> (),
-	_update: (StateManager) -> (),
+	update: (StateManager) -> (),
 
 	add: (StateManager, initialStateId: string, initalState: State<...any>) -> (),
 	exit: (StateManager, ...any) -> (),
 	switch: (StateManager, ...any) -> (),
+	remove: (StateManager, ...any) -> (),
 }
 
 local stateMachine = {}
@@ -23,33 +22,30 @@ local stateMachine = {}
 function stateMachine.new(): StateManager
 	local self = {}
 	self._currentState = nil
-	self._currentConnection = nil
 	self._states = {}
-	self._disconnectConnection = function()
-		if self._currentConnection and self._currentConnection.Connected then
-			self._currentConnection:Disconnect()
-		end
-	end
 
 	self.add = stateMachine.add
 	self.exit = stateMachine.exit
 	self.switch = stateMachine.switch
-	self._update = stateMachine.update
+	self.update = stateMachine.update
+	self.remove = stateMachine.remove
 
-	RunService.Heartbeat:Connect(function(dt)
-		self:_update(dt)
-	end)
+	--[[
+		RunService.Heartbeat:Connect(function(dt)
+			StateManager:update(dt)
+		end)
+	]]
 
 	return self :: StateManager
 end
 
-function stateMachine:add(initalStateId, initalState)
-	if self._states[initalStateId] then
-		warn(`{initalStateId} is already existing state, Please try another id`)
+function stateMachine:add(newStateId, newState)
+	if self._states[newStateId] then
+		warn(`{newStateId} is already existing state, Please try another id`)
 		return
 	end
 
-	self._states[initalStateId] = initalState :: State<...any>
+	self._states[newStateId] = newState :: State<...any>
 end
 
 --[[
@@ -57,17 +53,13 @@ end
     Update functions will connect one of the runservice signals to the current running state update function.
     If the state doesn't have update function then it won't work.
 ]]
-function stateMachine:update(dt)
-	-- Fatal: First check if state is there, Second check if state have .update function
-	if not self._currentState then
-		return
-	end
-
-	-- No update function
+function stateMachine:update(dt: number)
+	-- Check: Check if update function is a thing, If it doesn't exist there is no point in calling.
 	if not self._currentState.update then
 		return
 	end
 
+	-- Call the .update function with deltaTime
 	self._currentState.update(dt)
 end
 
@@ -75,24 +67,17 @@ end
 Switch to the desired state, But the state must be added using :add() method
 state: The state id we're trying to switch to
 ]]
-function stateMachine:switch(initialStateId, ...)
+function stateMachine:switch(StateId, ...)
 	-- The state doesn't even exist, how do you expect it to work.
-	local initialState = self._states[initialStateId]
-	if not initialState then
+	if self._currentState == StateId then
 		return
 	end
 
-	if self._currentState ~= nil then
-		if self._currentState == initialState then
-			return
-		end
-
-		-- Leave the current state so we can move to the next state
-		self:exit()
-	end
+	-- Exit the previous state, So we can move on the new state
+	self:exit()
 
 	-- Enter to the current state
-	self._currentState = self._states[initialStateId] :: State<...any>
+	self._currentState = self._states[StateId] :: State<...any>
 	if not self._currentState then
 		return
 	end
@@ -101,8 +86,6 @@ function stateMachine:switch(initialStateId, ...)
 	if self._currentState.enter then
 		self._currentState.enter(...)
 	end
-
-	-- Start the update after state is entered
 end
 
 --[[
@@ -120,6 +103,23 @@ function stateMachine:exit(...)
 	end
 
 	self._currentState = nil
+end
+
+--[[
+Remove the state from state machine, But becareful if the state you're removing get called later then it will cause an error
+]]
+function stateMachine:remove(stateId: string, ...)
+	-- There is no point in going forward, Because the stateId doesn't exist in self_states.
+	if not self._states[stateId] then
+		return
+	end
+
+	-- Remove the state from statemachine if we happend to have a case that we needed to remove state.
+	if self._currentState == self._state[stateId] then
+		self._currentState.exit(...)
+	end
+
+	self._state[stateId] = nil
 end
 
 -- Remove states?
