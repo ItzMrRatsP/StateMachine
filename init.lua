@@ -1,3 +1,5 @@
+-- stylua: ignore start
+
 type State<T...> = {
 	update: (dt: number) -> ()?,
 	enter: (T...) -> ()?,
@@ -66,15 +68,16 @@ Switch to the desired state, But the state must be added using :add() method
 state: The state id we're trying to switch to
 ]]
 function stateMachine:switch(StateId, ...)
-	-- Leave previous state if it exist
-	if self._currentState then
-		self:exit()
-	end
-
 	-- The state doesn't even exist, how do you expect it to work.
 	if self._currentState == StateId then
 		return
 	end
+
+	-- To avoid leaving the state that we're already in we use this method
+	if self._currentState then
+		self:exit()
+	end
+
 	-- Enter to the current state
 	self._currentState = self._states[StateId] :: State<...any>
 	if not self._currentState then
