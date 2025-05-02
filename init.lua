@@ -4,10 +4,11 @@ type State<T...> = {
 	update: (dt: number) -> ()?,
 	enter: (T...) -> ()?,
 	exit: (T...) -> ()?,
+	canEnter: (...any) -> boolean,
 }
 
 export type StateManager = {
-	_currentState: State<...any>?,
+	currentState: State<...any>?,
 	_states: { State<...any>? },
 
 	update: (StateManager) -> (),
@@ -21,7 +22,7 @@ local stateMachine = {}
 
 function stateMachine.new(): StateManager
 	local self = {}
-	self._currentState = nil
+	self.currentState = nil
 	self._states = {}
 
 	self.add = stateMachine.add
@@ -55,12 +56,12 @@ end
 ]]
 function stateMachine:update(dt: number)
 	-- Check: Check if update function is a thing, If it doesn't exist there is no point in calling.
-	if not self._currentState or not self._currentState.update then
+	if not self.currentState or not self.currentState.update then
 		return
 	end
 
 	-- Call the .update function with deltaTime
-	self._currentState.update(dt)
+	self.currentState.update(dt)
 end
 
 --[[
@@ -69,24 +70,28 @@ state: The state id we're trying to switch to
 ]]
 function stateMachine:switch(StateId, ...)
 	-- The state doesn't even exist, how do you expect it to work.
-	if self._currentState == StateId then
+	if self.currentState == StateId then
 		return
 	end
 
 	-- To avoid leaving the state that we're already in we use this method
-	if self._currentState then
+	if self.currentState then
 		self:exit()
 	end
 
 	-- Enter to the current state
-	self._currentState = self._states[StateId] :: State<...any>
-	if not self._currentState then
+	self.currentState = self._states[StateId] :: State<...any>
+	if not self.currentState then
+		return
+	end
+
+	if self.currentState.canEnter and not self.currentState.canEnter(...) then
 		return
 	end
 
 	-- Enter the state
-	if self._currentState.enter then
-		self._currentState.enter(...)
+	if self.currentState.enter then
+		self.currentState.enter(...)
 	end
 end
 
@@ -95,16 +100,16 @@ This will exit the currently running state, So for example if our currently runn
 No arguments required
 ]]
 function stateMachine:exit(...)
-	if not self._currentState then
+	if not self.currentState then
 		return
 	end
 
 	-- Leave the state
-	if self._currentState.exit then
-		self._currentState.exit(...)
+	if self.currentState.exit then
+		self.currentState.exit(...)
 	end
 
-	self._currentState = nil
+	self.currentState = nil
 end
 
 --[[
@@ -117,8 +122,8 @@ function stateMachine:remove(stateId: string, ...)
 	end
 
 	-- Remove the state from statemachine if we happend to have a case that we needed to remove state.
-	if self._currentState == self._state[stateId] then
-		self._currentState.exit(...)
+	if self.currentState == self._state[stateId] then
+		self.currentState.exit(...)
 	end
 
 	self._state[stateId] = nil
