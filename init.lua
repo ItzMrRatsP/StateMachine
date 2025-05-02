@@ -36,7 +36,7 @@ function stateMachine.new(): StateManager
 		end)
 	]]
 
-	return self :: StateManager
+	return table.freeze(self) :: StateManager
 end
 
 function stateMachine:add(newStateId, newState)
