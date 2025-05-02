@@ -70,14 +70,13 @@ state: The state id we're trying to switch to
 ]]
 function stateMachine:switch(StateId, ...)
 	-- The state doesn't even exist, how do you expect it to work.
-	if self.currentState == StateId then
+	-- To avoid leaving the state that we're already in we use this method
+	if not self.currentState or self.currentState == StateId then
 		return
 	end
 
-	-- To avoid leaving the state that we're already in we use this method
-	if self.currentState then
-		self:exit()
-	end
+	-- We leave the previous state so we won't have 2 state running, Thats the whole point of statemachine.
+	self:exit()
 
 	-- Enter to the current state
 	self.currentState = self._states[StateId] :: State<...any>
