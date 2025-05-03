@@ -146,7 +146,7 @@ function stateMachine:freeze(requiredTimeForUnfreeze: number, afterFreeze: () ->
 	end
 
 	self._freeze = true
-	self._runningTaskDelay = task.delay(requiredTimeForUnfreeze, function(...)
+	self._runningTaskDelay = task.delay(requiredTimeForUnfreeze, function()
 		self._freeze = false
 		afterFreeze()
 	end)
