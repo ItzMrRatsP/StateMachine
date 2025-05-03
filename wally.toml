@@ -1,6 +1,6 @@
 [package]
 name = "itzmrratsp/genericstatemachine"
-version = "0.1.36"
+version = "0.1.4"
 registry = "https://github.com/UpliftGames/wally-index"
 realm = "shared"
 exclude = [
