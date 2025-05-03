@@ -95,7 +95,6 @@ function stateMachine:switch(StateId, ...)
 	self.currentState = self._states[StateId] :: State<...any>
 
 	if self.currentState.canEnter and not self.currentState.canEnter(...) then
-		print("Cannot enter")
 		return
 	end
 
