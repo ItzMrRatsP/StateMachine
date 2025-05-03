@@ -18,7 +18,7 @@ export type StateManager = {
 	exit: (StateManager, ...any) -> (),
 	switch: (StateManager, ...any) -> (),
 	remove: (StateManager, ...any) -> (),
-	freeze: (requiredTimeForUnfreeze: number) -> ()
+	freeze: (StateManager, requiredTimeForUnfreeze: number, afterFreeze: () -> ()) -> ()
 }
 
 local stateMachine = {}
