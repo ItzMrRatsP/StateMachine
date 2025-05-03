@@ -4,18 +4,21 @@ type State<T...> = {
 	update: (dt: number) -> ()?,
 	enter: (T...) -> ()?,
 	exit: (T...) -> ()?,
-	canEnter: (...any) -> boolean,
+	canEnter: (...any) -> boolean?,
 }
 
 export type StateManager = {
 	currentState: State<...any>?,
 	_states: { State<...any>? },
+	_freeze: boolean,
+	_runningTaskDelay: thread?,
 
 	update: (StateManager) -> (),
 	add: (StateManager, initialStateId: string, initalState: State<...any>) -> (),
 	exit: (StateManager, ...any) -> (),
 	switch: (StateManager, ...any) -> (),
 	remove: (StateManager, ...any) -> (),
+	freeze: (requiredTimeForUnfreeze: number) -> ()
 }
 
 local stateMachine = {}
@@ -23,6 +26,9 @@ local stateMachine = {}
 function stateMachine.new(): StateManager
 	local self = {}
 	self.currentState = nil
+	self._freeze = false
+	self._runningTaskDelay = nil
+
 	self._states = {}
 
 	self.add = stateMachine.add
@@ -30,6 +36,7 @@ function stateMachine.new(): StateManager
 	self.switch = stateMachine.switch
 	self.update = stateMachine.update
 	self.remove = stateMachine.remove
+	self.freeze = stateMachine.freeze
 
 	--[[
 		RunService.Heartbeat:Connect(function(dt)
@@ -37,7 +44,7 @@ function stateMachine.new(): StateManager
 		end)
 	]]
 
-	return table.freeze(self) :: StateManager
+	return self :: StateManager
 end
 
 function stateMachine:add(newStateId, newState)
@@ -69,27 +76,32 @@ Switch to the desired state, But the state must be added using :add() method
 state: The state id we're trying to switch to
 ]]
 function stateMachine:switch(StateId, ...)
-	-- The state doesn't even exist, how do you expect it to work.
-	-- To avoid leaving the state that we're already in we use this method
-	if not self.currentState or self.currentState == StateId then
+	if self._freeze then
+		warn("State is freezed, Wait until the freeze is removed")
 		return
 	end
 
-	-- We leave the previous state so we won't have 2 state running, Thats the whole point of statemachine.
+	-- The state doesn't even exist, how do you expect it to work.
+	-- To avoid leaving the state that we're already in we use this method
+	-- Check if currentstate matches previous state
+	if self.currentState == self._states[StateId] then
+		return
+	end
+
+	-- Exit the state that we were in previously
 	self:exit()
 
 	-- Enter to the current state
 	self.currentState = self._states[StateId] :: State<...any>
-	if not self.currentState then
-		return
-	end
 
 	if self.currentState.canEnter and not self.currentState.canEnter(...) then
+		print("Cannot enter")
 		return
 	end
 
 	-- Enter the state
 	if self.currentState.enter then
+		warn("Enter state")
 		self.currentState.enter(...)
 	end
 end
@@ -126,6 +138,18 @@ function stateMachine:remove(stateId: string, ...)
 	end
 
 	self._state[stateId] = nil
+end
+
+function stateMachine:freeze(requiredTimeForUnfreeze: number, afterFreeze: () -> ())
+	if self._freeze and self._runningTaskDelay then
+		task.cancel(self._runningTaskDelay)
+	end
+
+	self._freeze = true
+	self._runningTaskDelay = task.delay(requiredTimeForUnfreeze, function(...)
+		self._freeze = false
+		afterFreeze()
+	end)
 end
 
 return stateMachine
