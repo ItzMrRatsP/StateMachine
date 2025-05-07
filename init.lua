@@ -9,16 +9,16 @@ type State<T...> = {
 
 export type StateManager = {
 	currentState: State<...any>?,
-	_states: { State<...any>? },
+	_states: { [string]: State<...any>? },
 	_freeze: boolean,
 	_runningTaskDelay: thread?,
 
-	update: (StateManager) -> (),
-	add: (StateManager, initialStateId: string, initalState: State<...any>) -> (),
-	exit: (StateManager, ...any) -> (),
-	switch: (StateManager, ...any) -> (),
-	remove: (StateManager, ...any) -> (),
-	freeze: (StateManager, requiredTimeForUnfreeze: number, afterFreeze: () -> ()) -> ()
+	update: (self: StateManager, deltaTime: number) -> (),
+	add: (self: StateManager, initialStateId: string, initalState: State<...any>) -> (),
+	exit: (self: StateManager, ...any) -> (),
+	switch: (self: StateManager, ...any) -> (),
+	remove: (self: StateManager, ...any) -> (),
+	freeze: (self: StateManager, requiredTimeForUnfreeze: number, afterFreeze: () -> ()) -> ()
 }
 
 local stateMachine = {}
@@ -45,8 +45,6 @@ local stateMachine = {}
 	- _states: A table of all states in the state machine.
 	- _freeze: A boolean indicating if the state machine is currently frozen.
 	- _runningTaskDelay: A thread representing the current freeze task.
-
-	Note: You should not use the properties directly, instead use the methods provided by the state machine.
 ]]--
 function stateMachine.new(): StateManager
 	local self = {}
@@ -83,7 +81,7 @@ This function first checks if the state to be added already exists in the state 
 
 The function does not check if the newStateId is a string or not, or if the newState has the required functions (enter, exit, update, canEnter). It is up to the user to ensure that the newStateId is a valid string and that the newState has the required functions.
 ]]--
-function stateMachine:add(newStateId, newState)
+function stateMachine.add(self: StateManager, newStateId: string, newState: State<...any>)
 	if self._states[newStateId] then
 		warn(`{newStateId} is already existing state, Please try another id`)
 		return
@@ -98,7 +96,7 @@ Updates the state machine with the current deltaTime.
 
 This function will first check if the state machine has a current state. If it doesn't, the function exits early. It will also check if the current state has an `update` function. If it doesn't, the function exits early. If both conditions are met, the function calls the `update` function with the provided deltaTime.
 ]]--
-function stateMachine:update(dt: number)
+function stateMachine.update(self: StateManager, dt: number)
 	-- Check: Check if update function is a thing, If it doesn't exist there is no point in calling.
 	if not self.currentState or not self.currentState.update then
 		return
@@ -121,7 +119,7 @@ The function will then exit the current state by calling its exit function, and 
 
 Finally, the function will set the state machine's currentState property to the new state, indicating that the state machine is now in the new state.
 ]]--
-function stateMachine:switch(StateId, ...)
+function stateMachine.switch(self: StateManager, StateId: string, ...)
 	if self._freeze then
 		warn("State is freezed, Wait until the freeze is removed")
 		return
@@ -138,7 +136,10 @@ function stateMachine:switch(StateId, ...)
 	self:exit()
 
 	-- Enter to the current state
-	self.currentState = self._states[StateId] :: State<...any>
+	self.currentState = self._states[StateId] :: State<...any>?
+	if not self.currentState then
+		return
+	end
 
 	if self.currentState.canEnter and not self.currentState.canEnter(...) then
 		return
@@ -146,7 +147,6 @@ function stateMachine:switch(StateId, ...)
 
 	-- Enter the state
 	if self.currentState.enter then
-		warn("Enter state")
 		self.currentState.enter(...)
 	end
 end
@@ -160,7 +160,7 @@ Arguments:
 
 This function will first check if a state is currently active. If a state is active, it will call its exit function before removing it from the list of states. If no state is active, the function will exit early. Finally, the function will set the state machine's currentState property to nil, indicating that no state is currently active.
 ]]--
-function stateMachine:exit(...)
+function stateMachine.exit(self: StateManager, ...)
 	if not self.currentState then
 		return
 	end
@@ -183,13 +183,17 @@ Arguments:
 
 This function will first check if the provided stateId exists in the state machine's list of states. If the state does not exist, the function exits early. If the state exists and is currently active, it will call its exit function before removing it from the list of states.
 ]]
-function stateMachine:remove(stateId: string, ...)
+function stateMachine.remove(self: StateManager, stateId: string, ...)
 	if not self._states[stateId] then
 		return
 	end
 
+	if not self.currentState then 
+		return 
+	end
+
 	if self.currentState == self._states[stateId] then
-		self.currentState.exit(...)
+		self:exit(...)
 	end
 
 	self._states[stateId] = nil
@@ -206,7 +210,7 @@ The function takes two arguments, The first argument is the amount of time you w
 
 Note: If you call this function when the state machine is already freezed, Then it will cancel the previous freezed state machine and start a new one.
 ]]--
-function stateMachine:freeze(requiredTimeForUnfreeze: number, afterFreeze: () -> ())
+function stateMachine.freeze(self: StateManager, requiredTimeForUnfreeze: number, afterFreeze: () -> ())
 	if self._freeze and self._runningTaskDelay then
 		task.cancel(self._runningTaskDelay)
 	end
