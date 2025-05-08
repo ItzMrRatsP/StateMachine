@@ -14,9 +14,9 @@ export type StateManager = {
 	_runningTaskDelay: thread?,
 
 	update: (self: StateManager, deltaTime: number) -> (),
-	add: (self: StateManager, initialStateId: string, initalState: State<...any>) -> (),
+	add: (self: StateManager, newStateId: string, newState: State<...any>) -> (),
 	exit: (self: StateManager, ...any) -> (),
-	switch: (self: StateManager, ...any) -> (),
+	switch: (self: StateManager, stateId: string, ...any) -> (),
 	remove: (self: StateManager, ...any) -> (),
 	freeze: (self: StateManager, requiredTimeForUnfreeze: number, afterFreeze: () -> ()) -> ()
 }
