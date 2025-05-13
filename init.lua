@@ -222,7 +222,7 @@ function stateMachine.freeze(self: StateManager, requiredTimeForUnfreeze: number
 	end)
 end
 
-return stateMachine
+return stateMachine.new() :: StateManager
 
 --[[
 Author: @ItzMrRatsP

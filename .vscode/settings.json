@@ -1,0 +1,7 @@
+{
+    "vscord.status.buttons.button2.git.active.enabled": true,
+    "vscord.status.buttons.button2.git.idle.enabled": true,
+    "vscord.status.buttons.button2.git.inactive.enabled": true,
+    "luau-lsp.sourcemap.useVSCodeWatcher": true,
+    "luau-lsp.sourcemap.rojoPath": ""
+}
