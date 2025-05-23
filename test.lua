@@ -6,7 +6,7 @@ RunService.PreRender:Connect(function(deltaTime: number)
 	StateMachine:update(deltaTime)
 end)
 
-StateMachine:add("Test", {
+StateMachine:add("tEsT", {
 	enter = function()
 		print("I believe this will print when you enter the test state")
 	end,
@@ -25,4 +25,4 @@ StateMachine:add("Test", {
 })
 
 -- Switch the state to test
-StateMachine:switch("Test")
+StateMachine:switch("TEST")

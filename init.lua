@@ -1,6 +1,6 @@
 -- stylua: ignore start
 
-type State<T...> = {
+export type State<T...> = {
 	update: (dt: number) -> ()?,
 	enter: (T...) -> ()?,
 	exit: (T...) -> ()?,
@@ -82,12 +82,14 @@ This function first checks if the state to be added already exists in the state 
 The function does not check if the newStateId is a string or not, or if the newState has the required functions (enter, exit, update, canEnter). It is up to the user to ensure that the newStateId is a valid string and that the newState has the required functions.
 ]]--
 function stateMachine.add(self: StateManager, newStateId: string, newState: State<...any>)
-	if self._states[newStateId] then
+	local lowerStateId = string.lower(newStateId)
+	
+	if self._states[lowerStateId] then
 		warn(`{newStateId} is already existing state, Please try another id`)
 		return
 	end
 
-	self._states[newStateId] = newState :: State<...any>
+	self._states[lowerStateId] = newState :: State<...any>
 end
 
 
@@ -120,6 +122,8 @@ The function will then exit the current state by calling its exit function, and 
 Finally, the function will set the state machine's currentState property to the new state, indicating that the state machine is now in the new state.
 ]]--
 function stateMachine.switch(self: StateManager, StateId: string, ...)
+	local lowerStringId = string.lower(StateId)
+	
 	if self._freeze then
 		warn("State is freezed, Wait until the freeze is removed")
 		return
@@ -128,7 +132,7 @@ function stateMachine.switch(self: StateManager, StateId: string, ...)
 	-- The state doesn't even exist, how do you expect it to work.
 	-- To avoid leaving the state that we're already in we use this method
 	-- Check if currentstate matches previous state
-	if self.currentState == self._states[StateId] then
+	if self.currentState == self._states[lowerStringId] then
 		return
 	end
 
@@ -136,7 +140,7 @@ function stateMachine.switch(self: StateManager, StateId: string, ...)
 	self:exit()
 
 	-- Enter to the current state
-	self.currentState = self._states[StateId] :: State<...any>?
+	self.currentState = self._states[lowerStringId] :: State<...any>?
 	if not self.currentState then
 		return
 	end
@@ -184,7 +188,10 @@ Arguments:
 This function will first check if the provided stateId exists in the state machine's list of states. If the state does not exist, the function exits early. If the state exists and is currently active, it will call its exit function before removing it from the list of states.
 ]]
 function stateMachine.remove(self: StateManager, stateId: string, ...)
-	if not self._states[stateId] then
+	-- example: "LOWer" to "lower" so we can make it edge-case sensitive
+	local lowerStringId = string.lower(stateId)
+	
+	if not self._states[lowerStringId] then
 		return
 	end
 
@@ -192,11 +199,11 @@ function stateMachine.remove(self: StateManager, stateId: string, ...)
 		return 
 	end
 
-	if self.currentState == self._states[stateId] then
+	if self.currentState == self._states[lowerStringId] then
 		self:exit(...)
 	end
 
-	self._states[stateId] = nil
+	self._states[lowerStringId] = nil
 end
 
 --[[
