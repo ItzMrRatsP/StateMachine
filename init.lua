@@ -122,7 +122,7 @@ The function will then exit the current state by calling its exit function, and 
 Finally, the function will set the state machine's currentState property to the new state, indicating that the state machine is now in the new state.
 ]]--
 function stateMachine.switch(self: StateManager, StateId: string, ...)
-	local lowerStringId = string.lower(StateId)
+	local lowerStateId = string.lower(StateId)
 	
 	if self._freeze then
 		warn("State is freezed, Wait until the freeze is removed")
@@ -132,7 +132,7 @@ function stateMachine.switch(self: StateManager, StateId: string, ...)
 	-- The state doesn't even exist, how do you expect it to work.
 	-- To avoid leaving the state that we're already in we use this method
 	-- Check if currentstate matches previous state
-	if self.currentState == self._states[lowerStringId] then
+	if self.currentState == self._states[lowerStateId] then
 		return
 	end
 
@@ -140,7 +140,7 @@ function stateMachine.switch(self: StateManager, StateId: string, ...)
 	self:exit()
 
 	-- Enter to the current state
-	self.currentState = self._states[lowerStringId] :: State<...any>?
+	self.currentState = self._states[lowerStateId] :: State<...any>?
 	if not self.currentState then
 		return
 	end
@@ -189,9 +189,9 @@ This function will first check if the provided stateId exists in the state machi
 ]]
 function stateMachine.remove(self: StateManager, stateId: string, ...)
 	-- example: "LOWer" to "lower" so we can make it edge-case sensitive
-	local lowerStringId = string.lower(stateId)
+	local lowerStateId = string.lower(stateId)
 	
-	if not self._states[lowerStringId] then
+	if not self._states[lowerStateId] then
 		return
 	end
 
@@ -199,11 +199,11 @@ function stateMachine.remove(self: StateManager, stateId: string, ...)
 		return 
 	end
 
-	if self.currentState == self._states[lowerStringId] then
+	if self.currentState == self._states[lowerStateId] then
 		self:exit(...)
 	end
 
-	self._states[lowerStringId] = nil
+	self._states[lowerStateId] = nil
 end
 
 --[[
