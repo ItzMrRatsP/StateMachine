@@ -51,6 +51,7 @@ function stateMachine.new(): StateManager
 
 	self._states = {}
 
+	self.getRunningState = stateMachine.getRunningState
 	self.add = stateMachine.add
 	self.exit = stateMachine.exit
 	self.switch = stateMachine.switch
