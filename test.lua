@@ -22,6 +22,10 @@ StateMachine:add("tEsT", {
 	canEnter = function(Player: Player): boolean
 		return Player:IsDescendantOf(Players)
 	end,
+
+	canExit = function(): boolean
+		return true
+	end,
 })
 
 -- Switch the state to test
