@@ -5,6 +5,7 @@ export type State<T...> = {
 	enter: (T...) -> ()?,
 	exit: (T...) -> ()?,
 	canEnter: (...any) -> boolean?,
+	canExit: (...any) -> boolean?
 }
 
 export type StateManager = {
@@ -15,7 +16,7 @@ export type StateManager = {
 	getRunningState: (self: StateManager) -> string,
 	update: (self: StateManager, deltaTime: number) -> (),
 	add: (self: StateManager, newStateId: string, newState: State<...any>) -> (),
-	exit: (self: StateManager, ...any) -> (),
+	exit: (self: StateManager, ...any) -> boolean,
 	switch: (self: StateManager, stateId: string, ...any) -> (),
 	remove: (self: StateManager, ...any) -> (),
 }
@@ -139,11 +140,16 @@ function stateMachine.switch(self: StateManager, StateId: string, ...)
 	end
 
 	-- Exit the state that we were in previously
-	self:exit(...)
+	local _didStateExit = self:exit(...)
+
+	-- So basically, We want to make sure we left the last State, otherwise we wouldn't be able to exit.
+	if not _didStateExit then
+		return
+	end
 
 	-- Enter to the current state
 	self.currentState = self._states[lowerStateId] :: State<...any>?
-	
+
 	-- The state doesn't even exist, how do you expect it to work.
 	if not self.currentState then
 		return
@@ -174,6 +180,13 @@ This function will first check if a state is currently active. If a state is act
 ]]--
 function stateMachine.exit(self: StateManager, ...)
 	if not self.currentState then
+		return false
+	end
+
+	-- Check if the conditions are met for leaving the state
+	-- First we check if we have canExit in our state, And then we use it to see
+	-- If we can exit the state.
+	if self.currentState.canExit and not self.currentState.canExit(...) then
 		return
 	end
 
@@ -187,6 +200,9 @@ function stateMachine.exit(self: StateManager, ...)
 	-- Alongside it set the _runningStateId to "" so it we can switch states
 	self._runningStateId = ""
 	self.currentState = nil
+
+	-- We exit the state successfully, So we can switch to another state, Or just return the state of exit
+	return true
 end
 
 
