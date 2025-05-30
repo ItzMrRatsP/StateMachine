@@ -181,7 +181,7 @@ This function will first check if a state is currently active. If a state is act
 ]]--
 function stateMachine.exit(self: StateManager, ...)
 	if not self.currentState then
-		return false
+		return true
 	end
 
 	-- Check if the conditions are met for leaving the state
