@@ -187,7 +187,7 @@ function stateMachine.exit(self: StateManager, ...)
 	-- First we check if we have canExit in our state, And then we use it to see
 	-- If we can exit the state.
 	if self.currentState.canExit and not self.currentState.canExit(...) then
-		return
+		return false
 	end
 
 	-- If state has exit
